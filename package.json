@@ -1,0 +1,45 @@
+{
+  "name": "games-on-paper-server",
+  "version": "1.0.0",
+  "description": "Backend for the Games On Paper",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon ./src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "games-on-paper-server"
+  },
+  "keywords": [
+    "games",
+    "tic-tac-toe",
+    "dots",
+    "paper"
+  ],
+  "author": "pavlheo",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^1.0.3",
+    "dotenv": "^4.0.0",
+    "jsonwebtoken": "^8.1.0",
+    "koa": "^2.4.1",
+    "koa-bodyparser": "^4.2.0",
+    "koa-jwt": "^3.2.2",
+    "koa-router": "^7.3.0",
+    "mongoose": "^4.13.6"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^1.0.0",
+    "@types/dotenv": "^4.0.2",
+    "@types/jsonwebtoken": "^7.2.3",
+    "@types/koa": "^2.0.41",
+    "@types/koa-bodyparser": "^3.0.26",
+    "@types/koa-jwt": "^3.2.2",
+    "@types/koa-router": "^7.0.26",
+    "@types/mongoose": "^4.7.28",
+    "nodemon": "^1.12.1",
+    "ts-node": "^3.3.0",
+    "typescript": "^2.6.2"
+  }
+}
