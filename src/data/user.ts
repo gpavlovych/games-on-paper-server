@@ -1,4 +1,5 @@
 import * as mongoose from "mongoose";
+import { Game } from "./game";
 
 export const userModelName = "User";
 

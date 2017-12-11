@@ -28,7 +28,13 @@ const seedUsers = async(model: mongoose.Model<User>) => {
             email: "player2@example.com",
             roleName: "player",
             passwordHash:passwordHash});
-        await playerUserModel2.save(); 
+        await playerUserModel2.save();
+        const playerUserModel3 = new model({
+            displayName: "player 3",
+            email: "player3@example.com",
+            roleName: "player",
+            passwordHash:passwordHash});
+        await playerUserModel3.save();  
         console.log("users are seed");
     }
 };
@@ -61,10 +67,25 @@ const seedGameDefinitions = async(model: mongoose.Model<GameDefinition>) => {
     }
 };
 
-const seedGames = async(model: mongoose.Model<Game>) => {
+const seedGames = async(model: mongoose.Model<Game>, userModel: mongoose.Model<User>, gameDefinitionModel: mongoose.Model<GameDefinition>) => {
     const gamesCount = await model.find().count();
     if (gamesCount === 0) {
-        console.log("game definitions would be seed here");
+        const ticTacToe = await gameDefinitionModel.findOne({module: GameDefinitionHandler.TicTacToe}, "_id");
+        const dots = await gameDefinitionModel.findOne({module: GameDefinitionHandler.Dots}, "_id");
+        const players = await userModel.find({roleName: "player"}, "_id");
+        const dotsGameModel1 = new model({gameDefinition: dots._id, stats: {"some": "any"}, data: {"whatever":"goes"}, users:[players[0]._id, players[1]._id]});
+        await dotsGameModel1.save();
+        const dotsGameModel2 = new model({gameDefinition: dots._id, winner: players[0]._id, stats: {"some": "any"}, data: {"whatever":"goes"}, users:[players[0]._id, players[1]._id]});
+        await dotsGameModel2.save();
+        const dotsGameModel3 = new model({gameDefinition: dots._id, winner: players[1]._id, stats: {"some": "any"}, data: {"whatever":"goes"}, users:[players[0]._id, players[1]._id]});
+        await dotsGameModel3.save();
+        const ticTacToeGameModel1 = new model({gameDefinition: ticTacToe._id, stats: {"some": "any"}, data: {"whatever":"goes"}, players:[players[0]._id, players[1]._id]});
+        await ticTacToeGameModel1.save();
+        const ticTacToeGameModel2 = new model({gameDefinition: ticTacToe._id, winner: players[0]._id, stats: {"some": "any"}, data: {"whatever":"goes"}, users:[players[0]._id, players[1]._id]});
+        await ticTacToeGameModel2.save();
+        const ticTacToeGameModel3 = new model({gameDefinition: ticTacToe._id, winner: players[1]._id, stats: {"some": "any"}, data: {"whatever":"goes"}, users:[players[0]._id, players[1]._id]});
+        await ticTacToeGameModel3.save();
+        console.log("games are seed");
     }
 };
 
@@ -97,11 +118,11 @@ export function init(config: {
             reject();
         });
 
-        mongoDb.once('open', () => {
+        mongoDb.once('open', async () => {
             console.log(`Connected to database: ${config.url}`);
-            seedUsers(userModel);
-            seedGameDefinitions(gameDefinitionModel);
-            seedGames(gameModel);
+            await seedUsers(userModel);
+            await seedGameDefinitions(gameDefinitionModel);
+            await seedGames(gameModel, userModel,gameDefinitionModel);
             resolve(database);
         });
     });

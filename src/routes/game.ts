@@ -11,6 +11,7 @@ import {
 import {createdStatus} from "../middleware/status";
 import {CustomRoutes} from "./interfaces";
 import {Database} from "../database";
+import { currentId } from "async_hooks";
 
 export class GameRoutes implements CustomRoutes {
     constructor(private database: Database) {}
@@ -20,38 +21,58 @@ export class GameRoutes implements CustomRoutes {
         const routePathWithId = `${routePath}/:id`;
         const adminRoleName = "admin";
         router
-            .get(routePath, jwtVerify, async (ctx: Context) => {
-                ctx.body = await this.get();
+            .get(routePath, jwtVerifyRole(adminRoleName), async (ctx: any) => {
+                ctx.body = await this.getAll();
             })
-            .get(routePathWithId, jwtVerify, async (ctx: Context) => {
+            .get(`${routePath}/yours`, jwtVerify, async (ctx: any) => {
+                ctx.body = await this.getYours(ctx.state.user.userId);
+            })
+            .get(routePathWithId, jwtVerify, async (ctx: any) => {
                 ctx.body = await this.getById(ctx.params.id);
             })
-            .post(`${routePath}/invite`, jwtVerify, async (ctx: Context) => {
+            .post(`${routePath}/invite`, jwtVerify, async (ctx: any) => {
                 ctx.body =  await this.postInvite(ctx.request.body);
             }, createdStatus)
-            .post(`${routePathWithId}/accept`, jwtVerify, async (ctx: Context) => {
+            .post(`${routePathWithId}/accept`, jwtVerify, async (ctx: any) => {
                 ctx.body =  await this.postAccept(ctx.params.id, ctx.request.body);
             })
-            .post(`${routePathWithId}/decline`, jwtVerify, async (ctx: Context) => {
+            .post(`${routePathWithId}/decline`, jwtVerify, async (ctx: any) => {
                 ctx.body = await this.postDecline(ctx.params.id, ctx.request.body);
             })
-            .post(routePath, jwtVerifyRole(adminRoleName),async (ctx: Context) => {
+            .post(routePath, jwtVerifyRole(adminRoleName),async (ctx: any) => {
                 ctx.body = await this.post(ctx.request.body);
             }, createdStatus)
-            .put(routePathWithId, jwtVerifyRole(adminRoleName), async (ctx: Context) => {
+            .put(routePathWithId, jwtVerifyRole(adminRoleName), async (ctx: any) => {
                 ctx.body = await this.put(ctx.params.id, ctx.request.body);
             })
-            .del(routePathWithId, jwtVerifyRole(adminRoleName), async (ctx: Context) => {
+            .del(routePathWithId, jwtVerifyRole(adminRoleName), async (ctx: any) => {
                 ctx.body = await this.del(ctx.params.id);
             });
     }
 
-    private async get() : Promise<GameInfo[]>{
-        return await this.database.gameModel.find({}, "");
+    private async getAll() : Promise<GameInfo[]>{
+        return await this.database.gameModel
+            .find({}, "_id stats")
+            .populate("gameDefinition", "_id displayName")
+            .populate("winner", "_id displayName")
+            .populate("users", "_id displayName");
+    }
+
+    private async getYours(currentUserId: string) : Promise<GameInfo[]>{
+        console.log(currentUserId);
+        return await this.database.gameModel
+            .find({"users": currentUserId}, "_id stats")
+            .populate("gameDefinition", "_id displayName")
+            .populate("winner", "_id displayName")
+            .populate("users", "_id displayName");
     }
 
     private async getById(id: string): Promise<GameDetailsResponse> {
-        return await this.database.gameModel.findById(id);
+        return await this.database.gameModel
+            .findById(id, "_id stats data")
+            .populate("gameDefinition", "_id displayName description")
+            .populate("winner", "_id displayName")
+            .populate("users", "_id displayName");
     }
 
     private async post(model: CreateGameRequest): Promise<CreateGameResponse> {
