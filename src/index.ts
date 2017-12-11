@@ -27,14 +27,16 @@ app.use(body({
 app.use(json());
 app.use(cors());
 
-export const dbUrl = `mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+const dbUrl = `mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+const dbUser = process.env.DB_USER;
+const dbPwd = process.env.DB_PWD;
 const router = new Router();
 
 app
     .use(router.routes())
     .use(router.allowedMethods());
 
-init({url: dbUrl})
+init({url: dbUrl, user: dbUser, pwd: dbPwd})
     .then((database:Database) => {
         new UserRoutes(database).register(router);
         new GameDefinitionRoutes(database).register(router);
