@@ -5,7 +5,8 @@ export interface LoginRequest {
 
 export interface LoginResponse {
     userId: string;
-    userDisplayName:string;
+    userDisplayName: string;
+    userRoleName: string;
     token: string;
     expiresInSeconds: number;
 }
@@ -21,22 +22,22 @@ export interface RegisterResponse {
 }
 
 export interface UserInfo {
-    id: string;
+    _id: string;
     displayName: string;
     roleName: string;
     email: string;
 }
 
 export interface UserDetailsResponse {
-    id: string;
+    _id: string;
     displayName: string;
     roleName: string;
     email: string;
-    games: UserDetailsGameInfo[];
+    games?: UserDetailsGameInfo[];
 }
 
 export interface UserDetailsGameInfo {
-    id: string;
+    _id: string;
     gameDefinitionName: string;
     info: string;
     isWinner: boolean|null;
@@ -47,14 +48,14 @@ export interface PutUserRequest {
 }
 
 export interface PutUserResponse {
-    id: string;
+    _id: string;
     displayName: string;
     email: string;
 }
 
 
 export interface DeleteUserResponse {
-    id: string;
+    _id: string;
     displayName: string;
     email: string;
 }

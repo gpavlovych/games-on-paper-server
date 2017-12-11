@@ -1,34 +1,59 @@
-import * as Koa from "koa";
-import * as Router from "koa-router";
-import {UserController} from "./controllers/user-controller";
-import bodyParser = require("koa-bodyparser");
-import {GameController} from "./controllers/game-controller";
-import {GameDefinitionController} from "./controllers/game-definition-controller";
+///<reference path="../node_modules/@types/node/index.d.ts"/>
 import * as dotenv from "dotenv";
-import {initMongooose} from "./data/index";
-
-// process.env.VARIABLE_NAME is set from .env file
-dotenv.config();
-
-initMongooose();
+import * as Koa from 'koa';
+import * as body from 'koa-body';
+import * as json from 'koa-json';
+import * as Router from "koa-router";
+import * as KoaJwt from "koa-jwt";
+import {init, Database} from "./database";
+import cors = require("koa2-cors");
+import {UserRoutes} from "./routes/user";
+import {GameDefinitionRoutes} from "./routes/game-definition";
+import {GameRoutes} from "./routes/game";
 
 const app = new Koa();
 
-app.use(bodyParser());
-app.use(async (ctx, next) => {
-    // Log the request to the console
-    console.log('Url:', ctx.url);
-    // Pass the request to the next middleware function
-    await next();
-});
+dotenv.config();
+const secretKey: string = process.env.JWT_SECRET_KEY || "";
+const jwt = KoaJwt({secret: secretKey});
+app.use(body({
+    formidable: {
+        uploadDir: __dirname + '/public/uploads', // upload directory
+        keepExtensions: true // keep file extensions
+    },
+    multipart: true,
+    urlencoded: true,
+}));
+app.use(json());
+app.use(cors());
+
+export const dbUrl = `mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
 const router = new Router();
 
-new UserController().registerRoutes(router);
-new GameController().registerRoutes(router);
-new GameDefinitionController().registerRoutes(router);
+app
+    .use(router.routes())
+    .use(router.allowedMethods());
 
-app.use(router.routes());
+init({url: dbUrl})
+    .then((database:Database) => {
+        new UserRoutes(database).register(router);
+        new GameDefinitionRoutes(database).register(router);
+        new GameRoutes(database).register(router);
+    })
+    .catch((reason?: any) => {
+        console.log(`error while connecting to the db: ${reason}`);
+    });
 
-app.listen(3000);
 
-console.log('Server running on port 3000');
+if (!module.parent) {
+    const port = process.env.NODE_PORT || 8080;
+    const host = process.env.NODE_HOST || "localhost";
+    const protocol = process.env.NODE_PROTOCOL || "http";
+    app.listen(port);
+    console.log(`Node server started: ${protocol}://${host}:${port}/`);
+}
+else {
+    console.log("Called from unit tests");
+}
+
+export default app;

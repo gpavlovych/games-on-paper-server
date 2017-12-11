@@ -1,27 +1,26 @@
 export interface GameDefinitionInfo {
-
+    _id: string;
+    pictureUrl?: string;
+    displayName: string;
+    description: string;
 }
 
 export interface GameDefinitionDetails {
-
-}
-
-export interface CreateGameDefinitionRequest {
-
-}
-
-export interface CreateGameDefinitionResponse {
-
+    _id: string;
+    pictureUrl?: string;
+    displayName: string;
+    description: string;
 }
 
 export interface UpdateGameDefinitionRequest {
-
+    pictureUrl?: string;
+    displayName: string;
+    description: string;
 }
 
 export interface UpdateGameDefinitionResponse {
-
-}
-
-export interface DeleteGameDefinitionResponse {
-
+    _id: string;
+    pictureUrl?: string;
+    displayName: string;
+    description: string;
 }

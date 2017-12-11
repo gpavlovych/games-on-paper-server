@@ -6,20 +6,20 @@ export interface CreateGameRequest {
 }
 
 export interface CreateGameResponse{
-    id: string;
+    _id: string;
 }
 
 export interface GameInfo {
-    id: string;
-    userIds: string[];
+    _id: string;
+    userIds?: string[];
     winnerId?: string|null;
     stats?: any;
     data?: any;
 }
 
 export interface GameDetailsResponse {
-    id: string;
-    userIds: string[];
+    _id: string;
+    userIds?: string[];
     winnerId?: string|null;
     stats?: any;
     data?: any;
