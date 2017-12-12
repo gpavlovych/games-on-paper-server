@@ -7,7 +7,8 @@ export const gameModelName="Game";
 export const gameSchema = new mongoose.Schema({
     gameDefinition: { type: mongoose.Schema.Types.ObjectId, ref: gameDefinitionModelName, required: true },
     winner: {type: mongoose.Schema.Types.ObjectId, ref: userModelName, required: false},
-    users: [{type: mongoose.Schema.Types.ObjectId, ref: userModelName}],
+    invitedUsers: [{type: mongoose.Schema.Types.ObjectId, ref: userModelName}],
+    acceptedUsers: [{type: mongoose.Schema.Types.ObjectId, ref: userModelName}],
     stats: {type: mongoose.Schema.Types.Mixed, required: false},
     data: {type: mongoose.Schema.Types.Mixed, required: false}
 });
@@ -15,7 +16,8 @@ export const gameSchema = new mongoose.Schema({
 export interface Game extends mongoose.Document {
     gameDefinition: GameDefinition;
     winner?: User;
-    users?: User[];
+    invitedUsers?: User[];
+    acceptedUsers?: User[];
     stats?: any;
     data?: any;
 }

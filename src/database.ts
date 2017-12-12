@@ -73,17 +73,17 @@ const seedGames = async(model: mongoose.Model<Game>, userModel: mongoose.Model<U
         const ticTacToe = await gameDefinitionModel.findOne({module: GameDefinitionHandler.TicTacToe}, "_id");
         const dots = await gameDefinitionModel.findOne({module: GameDefinitionHandler.Dots}, "_id");
         const players = await userModel.find({roleName: "player"}, "_id");
-        const dotsGameModel1 = new model({gameDefinition: dots._id, stats: {"some": "any"}, data: {"whatever":"goes"}, users:[players[0]._id, players[1]._id]});
+        const dotsGameModel1 = new model({gameDefinition: dots._id, stats: {"some": "any"}, data: {"whatever":"goes"}, invitedUsers: [players[0]._id, players[1]._id   ]});
         await dotsGameModel1.save();
-        const dotsGameModel2 = new model({gameDefinition: dots._id, winner: players[0]._id, stats: {"some": "any"}, data: {"whatever":"goes"}, users:[players[0]._id, players[1]._id]});
+        const dotsGameModel2 = new model({gameDefinition: dots._id, winner: players[0]._id, stats: {"some": "any"}, data: {"whatever":"goes"}, acceptedUsers:[players[0]._id, players[1]._id]});
         await dotsGameModel2.save();
-        const dotsGameModel3 = new model({gameDefinition: dots._id, winner: players[1]._id, stats: {"some": "any"}, data: {"whatever":"goes"}, users:[players[0]._id, players[1]._id]});
+        const dotsGameModel3 = new model({gameDefinition: dots._id, winner: players[1]._id, stats: {"some": "any"}, data: {"whatever":"goes"}, acceptedUsers:[players[0]._id, players[1]._id]});
         await dotsGameModel3.save();
-        const ticTacToeGameModel1 = new model({gameDefinition: ticTacToe._id, stats: {"some": "any"}, data: {"whatever":"goes"}, players:[players[0]._id, players[1]._id]});
+        const ticTacToeGameModel1 = new model({gameDefinition: ticTacToe._id, stats: {"some": "any"}, data: {"whatever":"goes"}, invitedUsers:[players[0]._id, players[1]._id]});
         await ticTacToeGameModel1.save();
-        const ticTacToeGameModel2 = new model({gameDefinition: ticTacToe._id, winner: players[0]._id, stats: {"some": "any"}, data: {"whatever":"goes"}, users:[players[0]._id, players[1]._id]});
+        const ticTacToeGameModel2 = new model({gameDefinition: ticTacToe._id, winner: players[0]._id, stats: {"some": "any"}, data: {"whatever":"goes"}, acceptedUsers:[players[0]._id, players[1]._id]});
         await ticTacToeGameModel2.save();
-        const ticTacToeGameModel3 = new model({gameDefinition: ticTacToe._id, winner: players[1]._id, stats: {"some": "any"}, data: {"whatever":"goes"}, users:[players[0]._id, players[1]._id]});
+        const ticTacToeGameModel3 = new model({gameDefinition: ticTacToe._id, winner: players[1]._id, stats: {"some": "any"}, data: {"whatever":"goes"}, acceptedUsers:[players[0]._id, players[1]._id]});
         await ticTacToeGameModel3.save();
         console.log("games are seed");
     }

@@ -6,16 +6,18 @@ import {
     LoginResponse, RegisterRequest, PutUserRequest, RegisterResponse, PutUserResponse, DeleteUserResponse
 } from "../models/user-controller-models";
 import {expiresInSeconds, jwtSign, jwtVerify, jwtVerifyRole} from "../middleware/jwt";
-import {createdStatus} from "../middleware/status";
-import {CustomRoutes} from "./interfaces";
 import { Database } from "../database";
 import { User } from "../data/user";
 import { encode } from "punycode";
+import { RouteBase, ResponseWithStatus, ResponseStatus } from "./interfaces";
+import { IMiddleware } from "koa-router";
 
 const saltRounds = 10;
 
-export class UserRoutes implements CustomRoutes {
-    constructor (private database: Database){}
+export class UserRoutes extends RouteBase {
+    constructor (private database: Database){
+        super();
+    }
 
     register(router: Router) {
         const routePath = "/api/users";
@@ -24,75 +26,105 @@ export class UserRoutes implements CustomRoutes {
 
         router
             .get(routePath, jwtVerify, async (ctx: Context) => {
-                ctx.body = await this.get();
+                this.patchWithStatus(ctx, await this.get());
             })
             .get(routePathWithId, jwtVerifyRole(adminRoleName), async (ctx: Context) => {
-                ctx.body = await this.getById(ctx.params.id);
+                this.patchWithStatus(ctx, await this.getById(ctx.params.id));
             })
             .post(routePath, async (ctx: any) => {
-                ctx.body = await this.signUp(ctx.request.body);
-            }, createdStatus)
+                this.patchWithStatus(ctx, await this.signUp(ctx.request.body));
+            })
             .post(`${routePath}/login`, async (ctx: any) => {
-                await this.signIn(ctx);
+                this.patchWithStatus(ctx, await this.signIn(ctx.request.body));
             })
-            .put(routePathWithId, jwtVerify, async (ctx: any) => {
-                this.verifyOwnOrRole(ctx, adminRoleName);
-                ctx.body = await this.put(ctx.params.id, ctx.request.body);
+            .put(routePathWithId, jwtVerify, this.verifyOwnOrRole(adminRoleName), async (ctx: any) => {
+                this.patchWithStatus(ctx, await this.put(ctx.params.id, ctx.request.body));
             })
-            .del(routePathWithId, jwtVerify, async (ctx: Context) => {
-                this.verifyOwnOrRole(ctx, adminRoleName);
-                ctx.body = await this.del(ctx.params.id);
+            .del(routePathWithId, jwtVerify, this.verifyOwnOrRole(adminRoleName), async (ctx: Context) => {
+                this.patchWithStatus(ctx, await this.del(ctx.params.id));
             });
     }
 
-    private verifyOwnOrRole(ctx: Context, roleName: string) {
+    private verifyOwnOrRole = (roleName: string): IMiddleware => (ctx: Context) => {
         if (ctx.params.id !== ctx.state.user.userId && roleName !== ctx.state.user.roleName) {
-            ctx.throw(403);
+            ctx.throw(ResponseStatus.Forbidden);
         }
     }
 
-    private async get(): Promise<UserInfo[]> {
-        return await this.database.userModel.find({}, "_id displayName roleName");
+    private async get(): Promise<ResponseWithStatus<UserInfo[]>> {
+        const result = await this.database.userModel.find({}, "_id displayName roleName");
+        if (result && result.length > 0) {
+            return {status: ResponseStatus.OK, responseBody: result};
+        } else {
+            return {status: ResponseStatus.NoContent};
+        }
     }
 
-    private async getById(id: string): Promise<UserDetailsResponse> {
-        return await this.database.userModel.findById(id);
+    private async getById(id: string): Promise<ResponseWithStatus<UserDetailsResponse>> {
+        const result = await this.database.userModel.findById(id);
+        if (result) {
+            return {status: ResponseStatus.OK, responseBody: result};
+        } else {
+            return {status: ResponseStatus.NotFound};
+        }
     }
 
-    private async signUp(model: RegisterRequest): Promise<RegisterResponse> {
+    private async signUp(model: RegisterRequest): Promise<ResponseWithStatus<RegisterResponse>> {
         const passwordHash = await bcrypt.hash(model.password, saltRounds);
         const entity = new this.database.userModel({  displayName: model.displayName,
             email: model.email,
             roleName: "player"});
         await entity.save();
-        return {userId: entity._id};
+        return {status: ResponseStatus.OK, responseBody: {userId: entity._id}};
     }
 
-    private async signIn(ctx: any) {
-        console.log(ctx);
-        const model: LoginRequest = ctx.request.body;
+    private async signIn(model: LoginRequest): Promise<ResponseWithStatus<LoginResponse>> {
         const user = await this.database.userModel.findOne({email: model.email},"_id displayName passwordHash roleName");
         if (await bcrypt.compare(model.password, user.passwordHash)) {
-            ctx.status = 200;
-            const responseBody: LoginResponse = {
+            const response: LoginResponse = {
                 userId: user._id, 
                 userDisplayName: user.displayName,
                 userRoleName: user.roleName, 
                 token: jwtSign(user._id, user.roleName),
                 expiresInSeconds: expiresInSeconds
             };
-            ctx.body = responseBody;
+            return {
+                status: ResponseStatus.OK,
+                responseBody: response
+            }
         }
         else {
-            ctx.status = 401;
+            return {
+                status: ResponseStatus.Unauthorized
+            }
         }
     }
 
-    private async put(id: string, model: PutUserRequest): Promise<PutUserResponse> {
-        return await this.database.userModel.findByIdAndUpdate(id, model);
+    private async put(id: string, model: PutUserRequest): Promise<ResponseWithStatus<PutUserResponse>> {
+        const response = await this.database.userModel.findByIdAndUpdate(id, model);
+        if (response){
+            return {
+                status: ResponseStatus.OK,
+                responseBody: response
+            };
+        } else {
+            return {
+                status: ResponseStatus.NotFound
+            };
+        }
     }
 
-    private async del(id: string): Promise<DeleteUserResponse> {
-        return await this.database.userModel.findByIdAndRemove(id);
-    }
+    private async del(id: string): Promise<ResponseWithStatus<DeleteUserResponse>> {
+        const response = await this.database.userModel.findByIdAndRemove(id);
+        if (response){
+            return {
+                status: ResponseStatus.OK,
+                responseBody: response
+            };
+        } else {
+            return {
+                status: ResponseStatus.NotFound
+            };
+        }
+   }
 }
